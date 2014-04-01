@@ -307,7 +307,6 @@ public class FongoTest {
     collection.createIndex(new BasicDBObject("textField", "text"));
     
     DBObject textSearchCommand = new BasicDBObject();
-//		textSearchCommand.put("text", Interest.COLLECTION);
 		textSearchCommand.put("search", "aaa -eee");
     
     DBObject textSearchResult = collection.getDB()
@@ -322,6 +321,26 @@ public class FongoTest {
             (DBObject)textSearchResult);
     assertEquals("aaa bbb",
             ((DBObject)((DBObject)((List)textSearchResult.get("results")).get(0)).get("obj")).get("textField"));
+  }
+  
+  @Test
+  public void testUnicodeRegexSearch() {
+    DBCollection collection = newCollection();
+    collection.insert((DBObject) JSON.parse("{ _id:1, text: \"aaa bbb\" }"));
+    collection.insert((DBObject) JSON.parse("{ _id:2, text: \"ccc ddd\" }"));
+    collection.insert((DBObject) JSON.parse("{ _id:3, text: \"яяя ЮЮЮ\" }"));
+    collection.insert((DBObject) JSON.parse("{ _id:4, text: \"աաա ԲԲԲ\" }"));
+    
+    
+    DBCursor cursor1 = collection.find(new BasicDBObject("text", Pattern.compile("ююю", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE)));
+    
+    assertEquals(Arrays.asList((DBObject) JSON.parse("{ _id:3, text: \"яяя ЮЮЮ\" }")
+    ), cursor1.toArray());
+    
+    DBCursor cursor2 = collection.find(new BasicDBObject("text", Pattern.compile("բբ", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE)));
+    
+    assertEquals(Arrays.asList((DBObject) JSON.parse("{ _id:4, text: \"աաա ԲԲԲ\" }")
+    ), cursor2.toArray());
   }
 
   @Test
